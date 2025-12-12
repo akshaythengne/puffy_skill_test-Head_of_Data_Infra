@@ -135,7 +135,7 @@ events[["utm_source", "utm_medium", "utm_campaign"]] = (
 checks = []
 
 # ------------------------------------------------------------
-# 0. STRICT PER-FILE SCHEMA VALIDATION (NEW)
+# 0. STRICT PER-FILE SCHEMA VALIDATION
 # ------------------------------------------------------------
 required_normalized = ["clientid", "pageurl", "referrer", "timestamp", "eventname", "eventdata", "useragent"]
 
@@ -157,22 +157,34 @@ has_severe_missing = any(
     for missing_cols in per_file_missing.values()
 )
 
+
 if has_severe_missing:
     schema_status = "fail"
+    # Show only bad files
+    details = {
+        fname: missing 
+        for fname, missing in per_file_missing.items() 
+        if missing
+    }
 elif any(per_file_missing.values()):
     schema_status = "warn"
+    details = {
+        fname: missing 
+        for fname, missing in per_file_missing.items() 
+        if missing
+    }
 else:
     schema_status = "pass"
+    details = {}   # Do NOT show full schema mapping when pass
 
 checks.append({
     "check": "schema_per_file",
     "status": schema_status,
-    "details": per_file_missing
+    "details": details
 })
 
 # 1. Row Counts
 rows_per_file = events.groupby("source_file").size().reset_index(name="rows")
-rows_per_day = events.groupby(events["timestamp_parsed"].dt.date).size().reset_index(name="rows")
 
 mean_rows = rows_per_file["rows"].mean()
 zero_row_files = rows_per_file[rows_per_file["rows"] == 0]
@@ -182,15 +194,18 @@ anomalous_files = rows_per_file[
 
 if len(zero_row_files) > 0:
     rowc_status = "fail"
+    details = zero_row_files.to_dict(orient='records')
 elif len(anomalous_files) > 0:
     rowc_status = "warn"
+    details = anomalous_files.to_dict(orient='records')
 else:
     rowc_status = "pass"
+    details = {}  # No detail when everything is normal
 
 checks.append({
     "check": "row_counts",
     "status": rowc_status,
-    "details": f"file_row_stats={rows_per_file.to_dict(orient='records')}"
+    "details": details
 })
 
 # 2. Global Schema Completeness
@@ -232,7 +247,8 @@ checks.append({"check": "duplicates", "status": "fail" if dup_count else "pass"}
 
 # 7. Client ID Completeness
 null_client_ids = events["client_id"].isna().sum()
-checks.append({"check": "client_id_nulls", "status": "warn" if null_client_ids else "pass"})
+checks.append({"check": "client_id_nulls", "status": "warn" if null_client_ids else "pass",
+               "details": null_client_ids})
 
 # 8. Referrer Anonymization Heuristic
 def is_anonymized(dom):
@@ -320,22 +336,22 @@ report.append("## Summary of Checks\n")
 for c in checks:
     report.append(f"- **{c['check']}** → *{c['status']}* — {c.get('details', '')}")
 
-report.append("\n## Key Findings\n")
-report.append(f"- Invalid event names found: {invalid_event_names}")
-report.append(f"- Duplicate events: {dup_count}")
-report.append(f"- Null client IDs: {null_client_ids}")
-report.append(f"- Referrer anonymization count: {events['referrer_anonymized'].sum()}")
-report.append(f"- Purchase price missing: {price_missing}")
-report.append(f"- Purchase price ≤ 0: {price_zero_neg}")
+# report.append("\n## Key Findings\n")
+# report.append(f"- Invalid event names found: {invalid_event_names}")
+# report.append(f"- Duplicate events: {dup_count}")
+# report.append(f"- Null client IDs: {null_client_ids}")
+# report.append(f"- Referrer anonymization count: {events['referrer_anonymized'].sum()}")
+# report.append(f"- Purchase price missing: {price_missing}")
+# report.append(f"- Purchase price ≤ 0: {price_zero_neg}")
 
-report.append("\n## Recommended Ingestion Rules\n")
-report.append("- Fail the batch if purchase events contain missing or non-positive price.")
-report.append("- Trigger an alert if JSON parse errors exceed 1% of events.")
-report.append("- Trigger an alert if daily event volume deviates >3σ from baseline.")
-report.append("- Reject rows with unknown event_name.")
-report.append("- Reject events missing timestamp or with unparseable timestamp.")
-report.append("- Require `client_id` except for controlled exemptions.")
-report.append("- Track duplicate row rate and block repeated identical events.")
+# report.append("\n## Recommended Ingestion Rules\n")
+# report.append("- Fail the batch if purchase events contain missing or non-positive price.")
+# report.append("- Trigger an alert if JSON parse errors exceed 1% of events.")
+# report.append("- Trigger an alert if daily event volume deviates >3σ from baseline.")
+# report.append("- Reject rows with unknown event_name.")
+# report.append("- Reject events missing timestamp or with unparseable timestamp.")
+# report.append("- Require `client_id` except for controlled exemptions.")
+# report.append("- Track duplicate row rate and block repeated identical events.")
 
 with open(f"{OUT_DIR}/dq_report.md", "w", encoding="utf-8") as f:
     f.write("\n".join(report))
