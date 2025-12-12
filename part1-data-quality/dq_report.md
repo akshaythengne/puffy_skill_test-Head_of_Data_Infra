@@ -2,6 +2,7 @@
 
 ## Summary of Checks
 
+- **schema_per_file** → *warn* — {'events_20250223.csv': [], 'events_20250224.csv': [], 'events_20250225.csv': [], 'events_20250226.csv': [], 'events_20250227.csv': [], 'events_20250228.csv': [], 'events_20250301.csv': [], 'events_20250302.csv': [], 'events_20250303.csv': [], 'events_20250304.csv': ['referrer'], 'events_20250305.csv': ['referrer'], 'events_20250306.csv': ['referrer'], 'events_20250307.csv': ['referrer'], 'events_20250308.csv': ['referrer']}
 - **row_counts** → *pass* — file_row_stats=[{'source_file': 'events_20250223.csv', 'rows': 4070}, {'source_file': 'events_20250224.csv', 'rows': 3769}, {'source_file': 'events_20250225.csv', 'rows': 3470}, {'source_file': 'events_20250226.csv', 'rows': 3177}, {'source_file': 'events_20250227.csv', 'rows': 3393}, {'source_file': 'events_20250228.csv', 'rows': 3263}, {'source_file': 'events_20250301.csv', 'rows': 3489}, {'source_file': 'events_20250302.csv', 'rows': 4335}, {'source_file': 'events_20250303.csv', 'rows': 4042}, {'source_file': 'events_20250304.csv', 'rows': 3538}, {'source_file': 'events_20250305.csv', 'rows': 2881}, {'source_file': 'events_20250306.csv', 'rows': 3442}, {'source_file': 'events_20250307.csv', 'rows': 3251}, {'source_file': 'events_20250308.csv', 'rows': 3843}]
 - **schema** → *pass* — missing=[]
 - **timestamp** → *pass* — bad_timestamps=0

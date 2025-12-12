@@ -26,10 +26,16 @@ if not paths:
     raise FileNotFoundError("No event files found.")
 
 dfs = []
+file_column_map = {}
+
 for p in paths:
     df = pd.read_csv(p, dtype=str)
     df.columns = [c.strip().lower() for c in df.columns]
     df["source_file"] = os.path.basename(p)
+
+    # Save the columns seen in this file (used later for per-file schema checks)
+    cols = [c.strip().lower() for c in df.columns]
+    file_column_map[os.path.basename(p)] = cols
     dfs.append(df)
 
 events = pd.concat(dfs, ignore_index=True)
@@ -128,6 +134,42 @@ events[["utm_source", "utm_medium", "utm_campaign"]] = (
 
 checks = []
 
+# ------------------------------------------------------------
+# 0. STRICT PER-FILE SCHEMA VALIDATION (NEW)
+# ------------------------------------------------------------
+required_normalized = ["clientid", "pageurl", "referrer", "timestamp", "eventname", "eventdata", "useragent"]
+
+
+# Per-file missing columns (using normalized names)
+file_norm_map = {fname: set(normalize_name(c) for c in cols)
+                 for fname, cols in file_column_map.items()}
+
+per_file_missing = {
+    fname: [req for req in required_normalized if req not in normcols]
+    for fname, normcols in file_norm_map.items()
+}
+
+# Severity logic
+severe_required = {"timestamp", "eventname", "eventdata", "clientid", "pageurl"}
+
+has_severe_missing = any(
+    any(req in severe_required for req in missing_cols)
+    for missing_cols in per_file_missing.values()
+)
+
+if has_severe_missing:
+    schema_status = "fail"
+elif any(per_file_missing.values()):
+    schema_status = "warn"
+else:
+    schema_status = "pass"
+
+checks.append({
+    "check": "schema_per_file",
+    "status": schema_status,
+    "details": per_file_missing
+})
+
 # 1. Row Counts
 rows_per_file = events.groupby("source_file").size().reset_index(name="rows")
 rows_per_day = events.groupby(events["timestamp_parsed"].dt.date).size().reset_index(name="rows")
@@ -151,7 +193,7 @@ checks.append({
     "details": f"file_row_stats={rows_per_file.to_dict(orient='records')}"
 })
 
-# 2. Schema Completeness
+# 2. Global Schema Completeness
 missing_cols = [k for k, v in canon_map.items() if v is None]
 checks.append({"check": "schema", "status": "fail" if missing_cols else "pass",
                "details": f"missing={missing_cols}"})
