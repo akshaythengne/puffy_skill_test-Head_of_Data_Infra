@@ -12,7 +12,7 @@ The pipeline is designed to reflect **real-world marketing analytics systems** t
 ---
 
 ## 📁 Repository Structure
-
+Link to the repository - https://github.com/akshaythengne/puffy_skill_test-Head_of_Data_Infra
 ```text
 .
 ├── data/                          # Raw CSV event exports (date-partitioned)
