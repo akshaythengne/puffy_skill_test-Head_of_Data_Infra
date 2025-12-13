@@ -1,0 +1,14 @@
+{
+  "date": "2025-03-09",
+  "alerts": [
+    {
+      "severity": "WARN",
+      "message": "High null client_id rate: 34.50%"
+    },
+    {
+      "severity": "CRITICAL",
+      "message": "Revenue drop detected: 10565 vs baseline 33636"
+    }
+  ],
+  "status": "FAIL"
+}
