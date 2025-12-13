@@ -1,3 +1,6 @@
 pandas
 numpy
 python-dateutil
+duckdb
+pyarrow
+matplotlib
