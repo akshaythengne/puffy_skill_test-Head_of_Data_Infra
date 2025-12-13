@@ -1,6 +1,6 @@
 # 🛏️ Puffy – Head of Data Infrastructure & Analytics Skill Test
 
-This repository implements an **end-to-end analytics data pipeline** for a DTC e-commerce business, covering:
+I've created this repository using my knowledge and help from Chatgpt. This repository implements an **end-to-end analytics data pipeline** for a DTC e-commerce business, covering:
 
 1. Incoming data quality validation
 2. Data cleaning and transformation
